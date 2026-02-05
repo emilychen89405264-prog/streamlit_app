@@ -1,0 +1,42 @@
+import streamlit as st
+import os
+from google import genai
+
+# 網頁標題
+st.set_page_config(page_title="我的 Gemini AI 工具", page_icon="🤖")
+st.title("🚀 Gemini 專業分析工具")
+
+# 側邊欄設定
+with st.sidebar:
+    st.header("設定")
+    # 讓使用者可以選擇要輸入自己的 Key，或使用預設的 (如果您想請客)
+    user_key = st.text_input("輸入 Gemini API Key", type="password")
+    model_choice = st.selectbox("選擇模型", ["gemini-1.5-flash", "gemini-1.5-pro"])
+
+# 主要功能區
+task_input = st.text_area("請輸入要分析的內容", placeholder="例如：比特幣今日走勢分析...")
+
+if st.button("開始執行 AI 分析"):
+    # 優先使用使用者輸入的 Key，若沒輸入則抓系統環境變數
+    final_key = user_key if user_key else os.getenv("GEMINI_API_KEY")
+    
+    if not final_key:
+        st.error("❌ 請先在側邊欄輸入 API Key！")
+    elif not task_input:
+        st.warning("⚠️ 請輸入分析內容。")
+    else:
+        try:
+            with st.spinner("AI 正在思考中..."):
+                client = genai.Client(api_key=final_key)
+                response = client.models.generate_content(
+                    model=model_choice,
+                    contents=task_input
+                )
+                st.success("✅ 分析完成！")
+                st.markdown("### AI 回應結果：")
+                st.write(response.text)
+        except Exception as e:
+            st.error(f"執行發生錯誤: {e}")
+
+# 頁尾說明
+st.info("提示：這是一個使用 Streamlit 建立的網頁工具，連結到您的 GitHub 自動執行。")
